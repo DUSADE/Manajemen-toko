@@ -1,0 +1,549 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans, 'Segoe UI', sans-serif); background: var(--color-background-tertiary); color: var(--color-text-primary); }
+  .app { display: flex; min-height: 600px; border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+  .sidebar { width: 200px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); padding: 16px 0; flex-shrink: 0; }
+  .sidebar-brand { padding: 0 16px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 8px; }
+  .sidebar-brand .logo { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .sidebar-brand .sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); border-radius: 0; transition: background 0.1s; }
+  .nav-item:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .nav-item.active { background: #E6F1FB; color: #185FA5; font-weight: 500; border-right: 2px solid #185FA5; }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .nav-label { font-size: 12px; }
+  .main { flex: 1; display: flex; flex-direction: column; background: var(--color-background-secondary); min-width: 0; }
+  .topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-title { font-size: 15px; font-weight: 500; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .notif-badge { position: relative; cursor: pointer; }
+  .badge { position: absolute; top: -4px; right: -4px; background: #E24B4A; color: white; font-size: 9px; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
+  .user-chip { background: #E6F1FB; color: #185FA5; font-size: 11px; padding: 4px 10px; border-radius: var(--border-radius-md); font-weight: 500; }
+  .content { padding: 16px 20px; flex: 1; overflow-y: auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .metric-card { background: var(--color-background-primary); border-radius: var(--border-radius-md); padding: 12px 14px; border: 0.5px solid var(--color-border-tertiary); }
+  .metric-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .metric-value { font-size: 20px; font-weight: 500; }
+  .metric-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .metric-green { color: #3B6D11; }
+  .metric-red { color: #A32D2D; }
+  .metric-blue { color: #185FA5; }
+  .card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); margin-bottom: 14px; }
+  .card-header { padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 13px; font-weight: 500; }
+  .card-body { padding: 12px 16px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; font-size: 12px; color: var(--color-text-primary); }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn-primary { background: #185FA5; color: white; border-color: #185FA5; }
+  .btn-primary:hover { background: #0C447C; }
+  .btn-danger { background: #A32D2D; color: white; border-color: #A32D2D; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 8px 10px; font-weight: 500; color: var(--color-text-secondary); font-size: 11px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  td { padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-background-secondary); }
+  .badge-pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 500; }
+  .pill-green { background: #EAF3DE; color: #3B6D11; }
+  .pill-red { background: #FCEBEB; color: #A32D2D; }
+  .pill-amber { background: #FAEEDA; color: #854F0B; }
+  .pill-blue { background: #E6F1FB; color: #185FA5; }
+  .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 11px; color: var(--color-text-secondary); }
+  input, select { width: 100%; padding: 6px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 12px; }
+  .notif-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #E24B4A; margin-top: 4px; flex-shrink: 0; }
+  .notif-dot.read { background: var(--color-border-tertiary); }
+  .notif-text { font-size: 12px; }
+  .notif-time { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+  .chart-bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 100px; margin: 8px 0; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .bar { width: 100%; background: #B5D4F4; border-radius: 3px 3px 0 0; transition: background 0.2s; cursor: pointer; min-height: 4px; }
+  .bar:hover { background: #378ADD; }
+  .bar-label { font-size: 9px; color: var(--color-text-secondary); }
+  .section-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .ai-box { background: #EEEDFE; border: 0.5px solid #AFA9EC; border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .ai-title { font-size: 12px; font-weight: 500; color: #3C3489; margin-bottom: 6px; }
+  .ai-item { font-size: 12px; color: #534AB7; padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 20px; width: 400px; max-width: 90vw; }
+  .modal-title { font-size: 14px; font-weight: 500; margin-bottom: 14px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .success-toast { display: none; position: fixed; bottom: 20px; right: 20px; background: #27500A; color: #C0DD97; padding: 10px 16px; border-radius: var(--border-radius-md); font-size: 12px; z-index: 200; }
+  .success-toast.show { display: block; }
+</style>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">Toko Sejahtera</div>
+      <div class="sub">Sistem Manajemen</div>
+    </div>
+    <div class="nav-item active" onclick="gotoPage('dashboard', this)">
+      <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="gotoPage('barang', this)">
+      <span class="nav-icon">📦</span><span class="nav-label">Data Barang</span>
+    </div>
+    <div class="nav-item" onclick="gotoPage('transaksi', this)">
+      <span class="nav-icon">🧾</span><span class="nav-label">Transaksi</span>
+    </div>
+    <div class="nav-item" onclick="gotoPage('restock', this)">
+      <span class="nav-icon">🚚</span><span class="nav-label">Restock</span>
+    </div>
+    <div class="nav-item" onclick="gotoPage('laporan', this)">
+      <span class="nav-icon">📈</span><span class="nav-label">Laporan</span>
+    </div>
+    <div class="nav-item" onclick="gotoPage('notifikasi', this)">
+      <span class="nav-icon">🔔</span><span class="nav-label">Notifikasi</span>
+    </div>
+    <div class="nav-item" onclick="gotoPage('pengguna', this)">
+      <span class="nav-icon">👥</span><span class="nav-label">Pengguna</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="page-title">Dashboard</span>
+      <div class="topbar-right">
+        <div class="notif-badge" onclick="gotoPage('notifikasi', null)">
+          🔔 <span class="badge">3</span>
+        </div>
+        <div class="user-chip">Admin — Pemilik</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="grid-4">
+          <div class="metric-card">
+            <div class="metric-label">Total Penjualan Hari Ini</div>
+            <div class="metric-value metric-blue">Rp 847.500</div>
+            <div class="metric-sub">↑ 12% dari kemarin</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Keuntungan Hari Ini</div>
+            <div class="metric-value metric-green">Rp 213.000</div>
+            <div class="metric-sub">Margin 25,1%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Total Barang</div>
+            <div class="metric-value">48 item</div>
+            <div class="metric-sub">3 stok menipis</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Transaksi Hari Ini</div>
+            <div class="metric-value">27</div>
+            <div class="metric-sub">Rata-rata Rp 31.389</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Penjualan 7 Hari Terakhir</span>
+            </div>
+            <div class="card-body">
+              <div class="chart-bar-wrap" id="chart-bars"></div>
+              <div style="display:flex;gap:6px;justify-content:space-around;margin-top:4px;" id="chart-labels"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Rekomendasi AI</span></div>
+            <div class="card-body">
+              <div class="ai-box">
+                <div class="ai-title">Saran dari sistem AI</div>
+                <div class="ai-item">→ Segera restock Indomie Goreng (sisa 4 pcs)</div>
+                <div class="ai-item">→ Penjualan Pocari Sweat naik 30% minggu ini</div>
+                <div class="ai-item">→ Kurangi stok Sabun Lifebuoy (penjualan lambat)</div>
+                <div class="ai-item">→ Pertimbangkan tambah varian snack pedas</div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="sendPrompt('Berikan rekomendasi stok yang lebih detail untuk toko kelontong saya berdasarkan data penjualan minggu ini')">Minta Analisis Lebih Lanjut ↗</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Stok Menipis — Perlu Perhatian</span></div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>Barang</th><th>Kategori</th><th>Stok</th><th>Min. Stok</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Indomie Goreng</td><td>Makanan</td><td>4</td><td>10</td><td><span class="badge-pill pill-red">Kritis</span></td></tr>
+                <tr><td>Aqua 600ml</td><td>Minuman</td><td>8</td><td>12</td><td><span class="badge-pill pill-amber">Menipis</span></td></tr>
+                <tr><td>Sabun Mandi Dove</td><td>Kebersihan</td><td>6</td><td>8</td><td><span class="badge-pill pill-amber">Menipis</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA BARANG -->
+      <div id="page-barang" class="page">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Daftar Barang</span>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-tambah-barang')">+ Tambah Barang</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead>
+                <tr><th>Nama Barang</th><th>Kategori</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th>Expired</th><th>Status</th><th>Aksi</th></tr>
+              </thead>
+              <tbody id="tabel-barang"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSAKSI -->
+      <div id="page-transaksi" class="page">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Input Transaksi Penjualan</span></div>
+            <div class="card-body">
+              <div class="form-group" style="margin-bottom:10px">
+                <label class="form-label">Pilih Barang</label>
+                <select id="trx-barang">
+                  <option value="">-- Pilih Barang --</option>
+                  <option value="Indomie Goreng|3000|4">Indomie Goreng (Stok: 4)</option>
+                  <option value="Aqua 600ml|4000|8">Aqua 600ml (Stok: 8)</option>
+                  <option value="Pocari Sweat|8000|20">Pocari Sweat (Stok: 20)</option>
+                  <option value="Sabun Dove|12000|15">Sabun Dove (Stok: 15)</option>
+                  <option value="Chitato|7000|30">Chitato (Stok: 30)</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Jumlah</label>
+                  <input type="number" id="trx-qty" value="1" min="1" oninput="hitungTotal()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Metode Bayar</label>
+                  <select id="trx-bayar"><option>Tunai</option></select>
+                </div>
+              </div>
+              <div class="metric-card" style="margin-bottom:10px">
+                <div class="metric-label">Total Harga (otomatis)</div>
+                <div class="metric-value metric-blue" id="trx-total">Rp 0</div>
+              </div>
+              <button class="btn btn-primary" onclick="prosesTransaksi()">Simpan Transaksi</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Riwayat Transaksi Hari Ini</span></div>
+            <div class="card-body" style="padding:0">
+              <table>
+                <thead><tr><th>Waktu</th><th>Barang</th><th>Qty</th><th>Total</th></tr></thead>
+                <tbody id="riwayat-transaksi"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESTOCK -->
+      <div id="page-restock" class="page">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Manajemen Restock Barang</span>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-restock')">+ Catat Restock</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr><th>Barang</th><th>Jumlah</th><th>Supplier</th><th>Tgl Masuk</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Indomie Goreng</td><td>48 pcs</td><td>PT Indofood</td><td>08 Apr 2026</td><td><span class="badge-pill pill-green">Diterima</span></td></tr>
+                <tr><td>Aqua 600ml</td><td>24 botol</td><td>Distributor Aqua</td><td>07 Apr 2026</td><td><span class="badge-pill pill-green">Diterima</span></td></tr>
+                <tr><td>Pocari Sweat</td><td>12 botol</td><td>Sinar Mas</td><td>09 Apr 2026</td><td><span class="badge-pill pill-amber">Dalam Pengiriman</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAPORAN -->
+      <div id="page-laporan" class="page">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header">
+            <span class="card-title">Filter Laporan</span>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Tipe Laporan</label>
+                <select id="lap-tipe"><option>Harian</option><option>Bulanan</option></select>
+              </div>
+              <div class="form-group"><label class="form-label">Periode</label>
+                <input type="date" id="lap-tanggal" value="2026-04-10">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-4">
+          <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-value metric-blue">Rp 847.500</div></div>
+          <div class="metric-card"><div class="metric-label">Total Modal</div><div class="metric-value">Rp 634.500</div></div>
+          <div class="metric-card"><div class="metric-label">Keuntungan</div><div class="metric-value metric-green">Rp 213.000</div></div>
+          <div class="metric-card"><div class="metric-label">Total Transaksi</div><div class="metric-value">27</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Barang Terlaris</span></div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr><th>Barang</th><th>Terjual</th><th>Pendapatan</th><th>Tren</th></tr></thead>
+              <tbody>
+                <tr><td>Pocari Sweat</td><td>42 pcs</td><td>Rp 336.000</td><td><span class="badge-pill pill-green">↑ Naik</span></td></tr>
+                <tr><td>Indomie Goreng</td><td>38 pcs</td><td>Rp 114.000</td><td><span class="badge-pill pill-blue">Stabil</span></td></tr>
+                <tr><td>Chitato</td><td>25 pcs</td><td>Rp 175.000</td><td><span class="badge-pill pill-blue">Stabil</span></td></tr>
+                <tr><td>Sabun Dove</td><td>8 pcs</td><td>Rp 96.000</td><td><span class="badge-pill pill-amber">↓ Turun</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFIKASI -->
+      <div id="page-notifikasi" class="page">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Notifikasi Stok</span></div>
+          <div class="card-body">
+            <div class="notif-item">
+              <div class="notif-dot"></div>
+              <div>
+                <div class="notif-text"><strong>Stok Kritis:</strong> Indomie Goreng tersisa 4 pcs, di bawah batas minimum (10 pcs)</div>
+                <div class="notif-time">Hari ini, 14:22</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot"></div>
+              <div>
+                <div class="notif-text"><strong>Stok Menipis:</strong> Aqua 600ml tersisa 8 botol, mendekati batas minimum</div>
+                <div class="notif-time">Hari ini, 11:05</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot"></div>
+              <div>
+                <div class="notif-text"><strong>Stok Menipis:</strong> Sabun Mandi Dove tersisa 6 pcs</div>
+                <div class="notif-time">Kemarin, 17:40</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot read"></div>
+              <div>
+                <div class="notif-text">Restock Pocari Sweat 12 botol sedang dalam pengiriman</div>
+                <div class="notif-time">09 Apr 2026, 09:00</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot read"></div>
+              <div>
+                <div class="notif-text">Restock Aqua 600ml 24 botol berhasil diterima</div>
+                <div class="notif-time">07 Apr 2026, 13:30</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENGGUNA -->
+      <div id="page-pengguna" class="page">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Kelola Hak Akses Pengguna</span>
+            <button class="btn btn-primary btn-sm">+ Tambah Pengguna</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr><th>Nama</th><th>Username</th><th>Peran</th><th>Hak Akses</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Sami</td><td>sami_admin</td>
+                  <td><span class="badge-pill pill-blue">Pemilik/Admin</span></td>
+                  <td>Semua fitur</td>
+                  <td><span class="badge-pill pill-green">Aktif</span></td>
+                </tr>
+                <tr>
+                  <td>Budi</td><td>budi_pegawai</td>
+                  <td><span class="badge-pill pill-amber">Pegawai</span></td>
+                  <td>Input transaksi, lihat barang</td>
+                  <td><span class="badge-pill pill-green">Aktif</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Batasan Akses Pegawai</span></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.7">
+              Pegawai <strong>tidak dapat</strong> mengakses: laporan keuntungan, data keuangan sensitif, manajemen pengguna, analisis penjualan, dan rekomendasi AI.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH BARANG -->
+<div class="modal-overlay" id="modal-tambah-barang">
+  <div class="modal">
+    <div class="modal-title">Tambah Barang Baru</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nama Barang</label><input type="text" id="b-nama" placeholder="Nama barang"></div>
+      <div class="form-group"><label class="form-label">Kategori</label>
+        <select id="b-kategori"><option>Makanan</option><option>Minuman</option><option>Kebersihan</option><option>Lainnya</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Harga Beli (Rp)</label><input type="number" id="b-beli" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Harga Jual (Rp)</label><input type="number" id="b-jual" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Stok Awal</label><input type="number" id="b-stok" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Tanggal Kadaluarsa</label><input type="date" id="b-exp"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-tambah-barang')">Batal</button>
+      <button class="btn btn-primary" onclick="tambahBarang()">Simpan Barang</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESTOCK -->
+<div class="modal-overlay" id="modal-restock">
+  <div class="modal">
+    <div class="modal-title">Catat Restock Barang</div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Barang</label>
+      <select><option>Indomie Goreng</option><option>Aqua 600ml</option><option>Pocari Sweat</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Jumlah Restock</label><input type="number" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Supplier</label><input type="text" placeholder="Nama supplier"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tanggal Masuk</label><input type="date"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select><option>Diterima</option><option>Dalam Pengiriman</option><option>Tertunda</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-restock')">Batal</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-restock');showToast('Restock berhasil dicatat!')">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="success-toast" id="toast"></div>
+
+<script>
+const pages = {
+  dashboard:'Dashboard', barang:'Data Barang', transaksi:'Transaksi Penjualan',
+  restock:'Manajemen Restock', laporan:'Laporan Penjualan', notifikasi:'Notifikasi Stok', pengguna:'Kelola Pengguna'
+};
+
+function gotoPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('page-title').textContent = pages[id];
+  if(el) el.classList.add('active');
+}
+
+const barangData = [
+  {nama:'Indomie Goreng', kat:'Makanan', beli:2000, jual:3000, stok:4, exp:'2026-12-31'},
+  {nama:'Aqua 600ml', kat:'Minuman', beli:2500, jual:4000, stok:8, exp:'2027-06-30'},
+  {nama:'Pocari Sweat', kat:'Minuman', beli:6000, jual:8000, stok:20, exp:'2027-01-15'},
+  {nama:'Sabun Dove', kat:'Kebersihan', beli:9000, jual:12000, stok:6, exp:'2028-03-01'},
+  {nama:'Chitato', kat:'Makanan', beli:5000, jual:7000, stok:30, exp:'2026-08-20'},
+];
+
+function renderBarang() {
+  const tb = document.getElementById('tabel-barang');
+  tb.innerHTML = barangData.map((b,i) => {
+    const pill = b.stok <= 5 ? 'pill-red' : b.stok <= 10 ? 'pill-amber' : 'pill-green';
+    const label = b.stok <= 5 ? 'Kritis' : b.stok <= 10 ? 'Menipis' : 'Aman';
+    return `<tr>
+      <td>${b.nama}</td><td>${b.kat}</td>
+      <td>Rp ${b.beli.toLocaleString('id-ID')}</td>
+      <td>Rp ${b.jual.toLocaleString('id-ID')}</td>
+      <td>${b.stok}</td><td>${b.exp}</td>
+      <td><span class="badge-pill ${pill}">${label}</span></td>
+      <td><button class="btn btn-sm" onclick="alert('Edit barang: ${b.nama}')">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
+
+const transaksiData = [
+  {waktu:'14:22', barang:'Pocari Sweat', qty:2, total:16000},
+  {waktu:'13:10', barang:'Indomie Goreng', qty:5, total:15000},
+  {waktu:'12:45', barang:'Chitato', qty:3, total:21000},
+];
+
+function renderTransaksi() {
+  const tb = document.getElementById('riwayat-transaksi');
+  tb.innerHTML = transaksiData.map(t => `<tr>
+    <td>${t.waktu}</td><td>${t.barang}</td><td>${t.qty}</td>
+    <td>Rp ${t.total.toLocaleString('id-ID')}</td>
+  </tr>`).join('');
+}
+
+function hitungTotal() {
+  const sel = document.getElementById('trx-barang').value;
+  const qty = parseInt(document.getElementById('trx-qty').value)||1;
+  if(!sel){document.getElementById('trx-total').textContent='Rp 0';return;}
+  const harga = parseInt(sel.split('|')[1]);
+  document.getElementById('trx-total').textContent = 'Rp ' + (harga*qty).toLocaleString('id-ID');
+}
+document.getElementById('trx-barang').addEventListener('change', hitungTotal);
+document.getElementById('trx-qty').addEventListener('input', hitungTotal);
+
+function prosesTransaksi() {
+  const sel = document.getElementById('trx-barang').value;
+  const qty = parseInt(document.getElementById('trx-qty').value)||1;
+  if(!sel){alert('Pilih barang terlebih dahulu');return;}
+  const parts = sel.split('|');
+  const now = new Date(); const jam = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  transaksiData.unshift({waktu:jam, barang:parts[0], qty, total:parseInt(parts[1])*qty});
+  renderTransaksi();
+  showToast('Transaksi berhasil disimpan! Stok diperbarui otomatis.');
+  document.getElementById('trx-barang').value='';
+  document.getElementById('trx-qty').value=1;
+  hitungTotal();
+}
+
+function tambahBarang() {
+  const nama = document.getElementById('b-nama').value;
+  if(!nama){alert('Nama barang wajib diisi');return;}
+  barangData.push({nama, kat:document.getElementById('b-kategori').value, beli:parseInt(document.getElementById('b-beli').value)||0, jual:parseInt(document.getElementById('b-jual').value)||0, stok:parseInt(document.getElementById('b-stok').value)||0, exp:document.getElementById('b-exp').value||'-'});
+  renderBarang();
+  closeModal('modal-tambah-barang');
+  showToast('Barang berhasil ditambahkan!');
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => {if(e.target===m)m.classList.remove('open');}));
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function buildChart() {
+  const vals = [620,780,540,920,710,850,848];
+  const days = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+  const maxV = Math.max(...vals);
+  const bars = document.getElementById('chart-bars');
+  const lbls = document.getElementById('chart-labels');
+  bars.innerHTML = vals.map((v,i) => `<div class="bar-col"><div class="bar" style="height:${Math.round(v/maxV*90)}px" title="Rp ${v.toLocaleString('id-ID')}k"></div></div>`).join('');
+  lbls.innerHTML = days.map(d => `<div style="flex:1;text-align:center;font-size:9px;color:var(--color-text-secondary)">${d}</div>`).join('');
+}
+
+renderBarang(); renderTransaksi(); buildChart();
+</script>
