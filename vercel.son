@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/toko_kelontong_webapp.html" }
+  ]
+}
